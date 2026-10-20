@@ -2,6 +2,7 @@ package com.holybuckets.easymap;
 
 import com.holybuckets.foundation.event.BalmEventRegister;
 import com.holybuckets.easymap.block.ModBlocks;
+import com.holybuckets.easymap.config.EasyMapsConfig;
 import com.holybuckets.easymap.block.be.ModBlockEntities;
 import com.holybuckets.easymap.item.ModItems;
 import com.holybuckets.easymap.menu.ModMenus;
@@ -30,7 +31,7 @@ public class CommonClass {
         }
 
         //RegisterConfigs
-        //Balm.getConfig().registerConfig(ChallengeTempleConfig.class);
+        Balm.getConfig().registerConfig(EasyMapsConfig.class, null);
         EasyMapsMain.INSTANCE = new EasyMapsMain();
         BalmEventRegister.registerEvents();
         BalmEventRegister.registerCommands();

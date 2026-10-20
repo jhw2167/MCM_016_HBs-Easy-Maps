@@ -2,7 +2,9 @@ package com.holybuckets.easymap;
 
 
 import com.holybuckets.foundation.event.EventRegistrar;
-import com.holybuckets.easymap.config.TemplateConfig;
+import com.holybuckets.easymap.config.EasyMapsConfig;
+import com.holybuckets.easymap.config.ModConfig;
+import com.holybuckets.easymap.core.MapRevealerManager;
 import net.blay09.mods.balm.api.Balm;
 import net.blay09.mods.balm.api.event.EventPriority;
 import net.blay09.mods.balm.api.event.server.ServerStartingEvent;
@@ -13,7 +15,7 @@ import net.blay09.mods.balm.api.event.server.ServerStartingEvent;
  */
 public class EasyMapsMain {
     private static boolean DEV_MODE = false;;
-    private static TemplateConfig CONFIG;
+    private static EasyMapsConfig CONFIG;
     public static EasyMapsMain INSTANCE;
 
     public EasyMapsMain()
@@ -37,7 +39,8 @@ public class EasyMapsMain {
 
         //Events
         EventRegistrar registrar = EventRegistrar.getInstance();
-        //ChallengeBlockBehavior.init(registrar);
+        ModConfig.init(registrar);
+        MapRevealerManager.init(registrar);
 
 
         //register local events
@@ -46,7 +49,7 @@ public class EasyMapsMain {
     }
 
     private void onServerStarting(ServerStartingEvent e) {
-        CONFIG = Balm.getConfig().getActiveConfig(TemplateConfig.class);
+        CONFIG = Balm.getConfig().getActiveConfig(EasyMapsConfig.class);
         //this.DEV_MODE = CONFIG.devMode;
         this.DEV_MODE = false;
     }

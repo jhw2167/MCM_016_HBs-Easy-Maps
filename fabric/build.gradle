@@ -22,11 +22,7 @@ dependencies {
         changing = true
     }
 
-    modImplementation ("com.holybuckets.foundation:HBs_Foundation-fabric-${minecraft_version}:${foundation_version}") {
-        transitive = false
-        changing = true
-    }
-
+    modImplementation ("com.holybuckets.foundation:HBs_Foundation-fabric-${minecraft_version}:${foundation_version}")
     modImplementation("com.simibubi.create:create-fabric:${create_fabric_version}")
 
 }

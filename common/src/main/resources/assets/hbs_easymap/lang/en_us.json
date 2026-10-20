@@ -1,0 +1,12 @@
+{
+  "itemGroup.hbs_easymap": "HBs Easy Maps",
+
+  "map_reveal.created": "The cartographer charts the surrounding lands",
+  "map_reveal.filled": "The map gains detail from the surrounding lands",
+  "map_reveal.expanded": "The map is redrawn at a wider scale",
+  "map_reveal.recentered": "The map is redrawn for this region",
+  "map_reveal.nothing": "Nothing new could be charted here",
+  "map_reveal.rejected": "This map cannot be charted",
+  "map_reveal.complete": "The map is fully charted",
+  "chunk_reveal_pending": "The cartographer is still surveying - this map will fill in over time"
+}

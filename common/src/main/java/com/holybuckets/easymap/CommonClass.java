@@ -31,7 +31,7 @@ public class CommonClass {
         }
 
         //RegisterConfigs
-        Balm.getConfig().registerConfig(EasyMapsConfig.class, null);
+        Balm.getConfig().registerConfig(EasyMapsConfig.class);
         EasyMapsMain.INSTANCE = new EasyMapsMain();
         BalmEventRegister.registerEvents();
         BalmEventRegister.registerCommands();

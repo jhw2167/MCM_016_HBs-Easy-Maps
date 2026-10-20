@@ -37,6 +37,12 @@ versionRange="[${foundation_min_version},)"
 ordering="NONE"
 side="BOTH"
 [[dependencies.${mod_id}]]
+modId="hbs_chunkload"
+mandatory=true
+versionRange="[${chunkload_min_version},)"
+ordering="NONE"
+side="BOTH"
+[[dependencies.${mod_id}]]
 modId="create"
 mandatory=false
 versionRange="[${create_version},)"

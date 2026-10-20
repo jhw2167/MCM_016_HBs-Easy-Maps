@@ -166,6 +166,8 @@ subprojects {
                 "balm_version_range": project.balm_version_range,
                 "foundation_version": project.foundation_version,
                 "foundation_min_version": project.foundation_min_version,
+                "chunkload_version": project.chunkload_version,
+                "chunkload_min_version": project.chunkload_min_version,
                 "create_version": project.create_version
         ]
 

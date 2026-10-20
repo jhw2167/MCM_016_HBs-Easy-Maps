@@ -65,6 +65,14 @@ public class ModConfig {
         return getBalmConfig().devMode;
     }
 
+    public static int getMaxEffectiveMapScale() {
+        return Math.max(0, Math.min(getBalmConfig().maxEffectiveMapScale, 7));
+    }
+
+    public static int getRevealDefaultScale() {
+        return Math.max(0, Math.min(getBalmConfig().revealDefaultScale, getMaxEffectiveMapScale()));
+    }
+
     public static int getMaxIconsPerMap() {
         return Math.max(0, getBalmConfig().maxIconsPerMap);
     }

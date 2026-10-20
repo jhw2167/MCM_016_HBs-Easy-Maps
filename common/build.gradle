@@ -41,8 +41,11 @@ dependencies {
         transitive=false
     }
 
-    implementation ("com.holybuckets.foundation:HBs_Foundation-common-${minecraft_version}:${foundation_version}") {
+    implementation ("com.holybuckets.foundation:HBs_Foundation-common-${minecraft_version}")
+
+    implementation ("com.holybuckets.chunkload:HBs_Background_Chunk_Loader-common-${minecraft_version}:${chunkload_version}") {
         changing = true
+        transitive = false
     }
 }
 

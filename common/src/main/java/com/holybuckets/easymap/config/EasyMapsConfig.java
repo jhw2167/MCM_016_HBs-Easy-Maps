@@ -17,10 +17,10 @@ public class EasyMapsConfig {
 
     @Comment("Effective scale applied for each stored vanilla map scale 0-4. Values above 4 exceed vanilla range and cost more to fill")
     @NestedType(Integer.class)
-    public List<Integer> mapScaleTable = new ArrayList<>(Arrays.asList(3, 4, 4, 4, 4));
+    public List<Integer> mapScaleTable = new ArrayList<>(Arrays.asList(4, 4, 4, 4, 4));
 
     @Comment("Hard ceiling on effective map scale regardless of mapScaleTable")
-    public int maxEffectiveMapScale = 5;
+    public int maxEffectiveMapScale = 4;
 
     @Comment("Scale used when a cartography table reveals a blank map")
     public int revealDefaultScale = 4;

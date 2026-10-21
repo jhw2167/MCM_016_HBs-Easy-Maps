@@ -38,7 +38,7 @@ ordering="NONE"
 side="BOTH"
 [[dependencies.${mod_id}]]
 modId="hbs_chunkload"
-mandatory=true
+mandatory=false
 versionRange="[${chunkload_min_version},)"
 ordering="NONE"
 side="BOTH"

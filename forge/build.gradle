@@ -85,8 +85,10 @@ dependencies {
         transitive = false
     }
 
-    implementation fg.deobf("com.holybuckets.foundation:HBs_Foundation-forge-${minecraft_version}:${foundation_version}")
-    implementation fg.deobf("com.holybuckets.chunkload:HBs_Background_Chunk_Loader-forge-${minecraft_version}:${chunkload_version}")
+    implementation fg.deobf("com.holybuckets.foundation:HBs_Foundation-forge-${minecraft_version}:${foundation_version}") {
+        changing = true
+        transitive = false
+    }
 
     implementation fg.deobf("curse.maven:create-${create_proj_id}:${create_forge_file_id}")
 

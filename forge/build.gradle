@@ -91,6 +91,7 @@ dependencies {
     }
 
     implementation fg.deobf("curse.maven:create-${create_proj_id}:${create_forge_file_id}")
+    implementation fg.deobf("curse.maven:towers-of-the-wild-modded-859365:6353903")
 
 }
 

@@ -15,16 +15,6 @@ public class EasyMapsConfig {
     @Comment("devMode==true logs structure reveal and chunk priming results")
     public boolean devMode = false;
 
-    @Comment("Effective scale applied for each stored vanilla map scale 0-4. Values above 4 exceed vanilla range and cost more to fill")
-    @NestedType(Integer.class)
-    public List<Integer> mapScaleTable = new ArrayList<>(Arrays.asList(4, 4, 4, 4, 4));
-
-    @Comment("Hard ceiling on effective map scale regardless of mapScaleTable")
-    public int maxEffectiveMapScale = 4;
-
-    @Comment("Scale used when a cartography table reveals a blank map")
-    public int revealDefaultScale = 4;
-
     @Comment("Structure ids a cartography table may reveal on a map. Namespaced ids, minecraft namespace assumed when omitted")
     @NestedType(String.class)
     public List<String> revealableStructures = new ArrayList<>(Arrays.asList(
@@ -50,9 +40,4 @@ public class EasyMapsConfig {
     @Comment("Fill the map terrain from the biome source when revealed at a cartography table")
     public boolean revealFillsTerrain = true;
 
-    @Comment("Submit map edge chunks to the background chunk loader when a reveal is requested")
-    public boolean primeEdgeChunks = true;
-
-    @Comment("Spacing in chunks between sampled map chunks when priming the background loader")
-    public int primeChunkStride = 8;
 }

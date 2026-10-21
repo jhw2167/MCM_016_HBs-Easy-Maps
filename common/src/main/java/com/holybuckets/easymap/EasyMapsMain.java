@@ -4,6 +4,7 @@ package com.holybuckets.easymap;
 import com.holybuckets.foundation.event.EventRegistrar;
 import com.holybuckets.easymap.config.EasyMapsConfig;
 import com.holybuckets.easymap.config.ModConfig;
+import com.holybuckets.easymap.core.MapChunkManager;
 import com.holybuckets.easymap.core.MapRevealerManager;
 import net.blay09.mods.balm.api.Balm;
 import net.blay09.mods.balm.api.event.EventPriority;
@@ -40,6 +41,7 @@ public class EasyMapsMain {
         //Events
         EventRegistrar registrar = EventRegistrar.getInstance();
         ModConfig.init(registrar);
+        MapChunkManager.init(registrar);
         MapRevealerManager.init(registrar);
 
 

@@ -65,42 +65,12 @@ public class ModConfig {
         return getBalmConfig().devMode;
     }
 
-    public static int getMaxEffectiveMapScale() {
-        return Math.max(0, Math.min(getBalmConfig().maxEffectiveMapScale, 7));
-    }
-
-    public static int getRevealDefaultScale() {
-        return Math.max(0, Math.min(getBalmConfig().revealDefaultScale, getMaxEffectiveMapScale()));
-    }
-
     public static int getMaxIconsPerMap() {
         return Math.max(0, getBalmConfig().maxIconsPerMap);
     }
 
     public static boolean revealFillsTerrain() {
         return getBalmConfig().revealFillsTerrain;
-    }
-
-    public static boolean primeEdgeChunks() {
-        return getBalmConfig().primeEdgeChunks;
-    }
-
-    public static int getPrimeChunkStride() {
-        return Math.max(1, getBalmConfig().primeChunkStride);
-    }
-
-    public static int getEffectiveMapScale(int storedScale) {
-        EasyMapsConfig config = getBalmConfig();
-        int ceiling = Math.max(0, Math.min(config.maxEffectiveMapScale, 7));
-
-        List<Integer> table = config.mapScaleTable;
-        if (table == null || storedScale < 0 || storedScale >= table.size()) {
-            return Math.max(0, Math.min(storedScale, ceiling));
-        }
-
-        Integer mapped = table.get(storedScale);
-        if (mapped == null) return Math.max(0, Math.min(storedScale, ceiling));
-        return Math.max(0, Math.min(mapped, ceiling));
     }
 
     public boolean isHydrated() {

@@ -69,13 +69,13 @@ public class MapRevealerManager {
     public static void onCartographyTableUse(ServerLevel level, ServerPlayer player, BlockPos tablePos, ItemStack map) {
         MapItemSavedData existing = isBlankMap(map) ? null : MapItem.getSavedData(map, level);
         if (existing != null && existing.locked) {
-            MESSAGER.sendBottomActionHint(player, Constants.MOD_ID, Constants.MOD_ID + "map_reveal.locked");
+            MESSAGER.sendBottomActionHint(player, Constants.MOD_ID, Constants.MOD_ID + ".map_reveal.locked");
             return;
         }
 
         Integer mapId = MapChunkManager.getRegionMapId(level, tablePos.getX(), tablePos.getZ());
         if (mapId == null) {
-            MESSAGER.sendBottomActionHint(player, Constants.MOD_ID, Constants.MOD_ID + "map_reveal.rejected");
+            MESSAGER.sendBottomActionHint(player, Constants.MOD_ID, Constants.MOD_ID + ".map_reveal.rejected");
             return;
         }
         MapItemSavedData mapData = MapItem.getSavedData(mapId, level);
@@ -95,7 +95,7 @@ public class MapRevealerManager {
             player.drop(result, false);
         }
 
-        MESSAGER.sendBottomActionHint(player, Constants.MOD_ID, Constants.MOD_ID + "map_reveal.created");
+        MESSAGER.sendBottomActionHint(player, Constants.MOD_ID, Constants.MOD_ID + ".map_reveal.created");
     }
 
     public static boolean revealStructures(ServerLevel level, ItemStack map) {

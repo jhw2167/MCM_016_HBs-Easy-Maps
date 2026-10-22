@@ -1,11 +1,8 @@
 package com.holybuckets.easymap;
 
 import com.holybuckets.foundation.event.BalmEventRegister;
-import com.holybuckets.easymap.block.ModBlocks;
 import com.holybuckets.easymap.config.EasyMapsConfig;
-import com.holybuckets.easymap.block.be.ModBlockEntities;
 import com.holybuckets.easymap.item.ModItems;
-import com.holybuckets.easymap.menu.ModMenus;
 import com.holybuckets.easymap.platform.Services;
 import net.blay09.mods.balm.api.Balm;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -35,11 +32,7 @@ public class CommonClass {
         EasyMapsMain.INSTANCE = new EasyMapsMain();
         BalmEventRegister.registerEvents();
         BalmEventRegister.registerCommands();
-        ModBlocks.initialize(Balm.getBlocks());
-        ModBlockEntities.initialize(Balm.getBlockEntities());
         ModItems.initialize(Balm.getItems());
-        ModMenus.initialize(Balm.getMenus());
-        
         isInitialized = true;
     }
 

@@ -2,7 +2,6 @@ package com.holybuckets.easymap.client;
 
 import com.holybuckets.easymap.config.ModConfig;
 import com.holybuckets.easymap.config.OverlayAlignment;
-import com.holybuckets.easymap.core.PlayerHomeSync;
 import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.client.ClientEventRegistrar;
 import com.holybuckets.foundation.event.EventRegistrar;

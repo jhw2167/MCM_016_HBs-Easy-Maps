@@ -21,7 +21,9 @@ import com.holybuckets.easymap.Constants;
 import com.holybuckets.easymap.LoggerProject;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import net.blay09.mods.balm.api.Balm;
 import net.blay09.mods.balm.api.event.ChunkLoadingEvent;
+import net.blay09.mods.balm.api.event.EventPriority;
 import net.blay09.mods.balm.api.event.LevelLoadingEvent;
 import net.blay09.mods.balm.api.event.server.ServerStoppedEvent;
 import net.minecraft.core.BlockPos;
@@ -30,6 +32,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.MapItem;
 import net.minecraft.world.level.ChunkPos;
@@ -139,7 +142,8 @@ public class MapChunkManager {
 
     //** EVENTS **/
     public static void init(EventRegistrar reg) {
-        reg.registerOnLevelLoad(MapChunkManager::onLevelLoad);
+        Balm.getEvents().onEvent(LevelLoadingEvent.Load.class, MapChunkManager::onLevelLoad, EventPriority.Lowest);
+        //reg.registerOnLevelLoad(MapChunkManager::onLevelLoad, EventPriority.Lowest);
         reg.registerOnChunkLoad(MapChunkManager::handleChunkLoad);
         reg.registerOnServerTick(TickType.ON_120_TICKS, MapChunkManager::on120Ticks);
         reg.registerOnServerStopped(MapChunkManager::onServerStopped);
@@ -175,21 +179,21 @@ public class MapChunkManager {
     }
 
     //playerhasMap, checkMap, updateMap, markDirty, updateColors
-    public static void onPlayerHasItem(PlayerHasItemEvent event)
-    {
-        //parse inventory for all maps
-        ServerPlayer player = (ServerPlayer) event.getPlayer();
-        for(int i=0;i<player.getInventory().getContainerSize();i++) {
-            ItemStack stack = player.getInventory().getItem(i);
-            if(stack.isEmpty()||!(stack.getItem()instanceof MapItem))continue;
-            refreshHeldMaps(player,stack);
-        }
+    private static final Map<Player, ItemStack> PLAYERS_HAVE_MAP = new HashMap<>();
+    public static void onPlayerHasItem(PlayerHasItemEvent event) {
+        PLAYERS_HAVE_MAP.put(event.getPlayer(), event.getItemStack());
     }
 
     private static void on120Ticks(ServerTickEvent event) {
         for (ServerPlayer player : HBUtil.PlayerUtil.getAllPlayers()) {
             if (player == null || !(player.level() instanceof ServerLevel level)) continue;
             preloadNearestRegionCenter(level, player);
+        }
+
+        //for all players with maps, check if they have scouted the region, if so, update the map
+        for (Player player : PLAYERS_HAVE_MAP.keySet()) {
+            if (player instanceof ServerPlayer p)
+                refreshHeldMaps(p, PLAYERS_HAVE_MAP.get(player));
         }
     }
 
@@ -199,18 +203,18 @@ public class MapChunkManager {
 
         //Load all possible Maps
         INITIALIZED_CHUNKS.computeIfAbsent(level, k -> new LongOpenHashSet()).addAll(initialized);
-        MapIndex indices = level.getDataStorage().get(null, "idcounts");
+        MapIndex indices = level.getDataStorage().get(MapIndex::load, "idcounts");
+        if(indices==null) return;
         CompoundTag retriever = new CompoundTag();
         indices.save(retriever);
-        int i=0; String mapId = "map_" + i;;
-        while(retriever.contains(mapId)) {
-            MapItemSavedData data = level.getMapData(mapId);
+
+        for(String k : retriever.getAllKeys()) {
+            int i = retriever.getInt(k);
+            MapItemSavedData data = level.getMapData("map_" + i);
             if(isRegionMap(data, nearestRegionCenter(data.centerX,data.centerZ),level.dimension())) {
                 ChunkPos key = new ChunkPos(new BlockPos(data.centerX,0,data.centerZ));
                 regions(level).put(key,i);
             }
-            i++;
-            mapId = "map_" + i;
         }
     }
 
@@ -250,13 +254,13 @@ public class MapChunkManager {
     }
 
 
-
     public static int refreshHeldMaps(ServerPlayer player, ItemStack map) {
         MapItemSavedData data = MapItem.getSavedData(map, player.level());
         if (data == null) return 0;
         if (!isScouted(player, mapCenterChunk(data))) return 0;
         data.tickCarriedBy(player, map);
         markMapFullyDirty(MapItem.getMapId(map), data, player);
+        MapRevealerManager.revealStructures( (ServerLevel) player.level(), map);
         return 1;
     }
 

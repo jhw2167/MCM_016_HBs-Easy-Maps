@@ -1,12 +1,9 @@
 package com.holybuckets.easymap.client;
 
-import com.holybuckets.easymap.client.screen.ModScreens;
 import com.holybuckets.easymap.config.EasyMapsClientConfig;
-import com.holybuckets.easymap.item.ModItems;
 import com.holybuckets.foundation.client.ClientBalmEventRegister;
 import com.holybuckets.foundation.client.ClientEventRegistrar;
 import net.blay09.mods.balm.api.Balm;
-import net.blay09.mods.balm.api.client.BalmClient;
 
 
 public class CommonClassClient {
@@ -16,8 +13,6 @@ public class CommonClassClient {
         Balm.getConfig().registerConfig(EasyMapsClientConfig.class);
         MapOverlayClient.init(registrar);
         ClientBalmEventRegister.registerEvents();
-        ModRenderers.clientInitialize(BalmClient.getRenderers());
-        ModScreens.clientInitialize(BalmClient.getScreens());
         //ModItems.clientInitialize();
     }
 

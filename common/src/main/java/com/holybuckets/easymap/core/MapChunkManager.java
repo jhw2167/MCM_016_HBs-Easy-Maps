@@ -6,25 +6,31 @@ import com.google.common.collect.Multiset;
 import com.google.common.collect.Multisets;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.holybuckets.easymap.mixin.HoldingPlayerAccessor;
 import com.holybuckets.foundation.GeneralConfig;
 import com.holybuckets.foundation.HBUtil;
 import com.holybuckets.foundation.core.ChunkExplorerManager;
 import com.holybuckets.foundation.datastore.DataStore;
 import com.holybuckets.foundation.event.EventRegistrar;
 import com.holybuckets.foundation.event.custom.DatastoreSaveEvent;
+import com.holybuckets.foundation.event.custom.PlayerHasItemEvent;
 import com.holybuckets.foundation.event.custom.ServerTickEvent;
 import com.holybuckets.foundation.event.custom.TickType;
 import com.holybuckets.foundation.model.ManagedChunkUtility;
 import com.holybuckets.easymap.Constants;
 import com.holybuckets.easymap.LoggerProject;
-import com.holybuckets.easymap.config.ModConfig;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import net.blay09.mods.balm.api.event.ChunkLoadingEvent;
 import net.blay09.mods.balm.api.event.LevelLoadingEvent;
 import net.blay09.mods.balm.api.event.server.ServerStoppedEvent;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.MapItem;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -33,11 +39,14 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.saveddata.maps.MapIndex;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class MapChunkManager {
 
@@ -47,46 +56,78 @@ public class MapChunkManager {
     public static final String TICKET_ID = "hbs_easymap_region";
     private static final String DATA_KEY = "regionMaps";
 
-    private static final Map<ResourceKey<Level>, Map<Long, Integer>> REGIONS = new HashMap<>();
+    private static final Map<ServerLevel, LongSet> INITIALIZED_CHUNKS = new HashMap<>();
+    private static final Map<Level, Map<ChunkPos, Integer>> REGIONS = new HashMap<>();
+    private static final Map<String, Set<ChunkPos>> scoutedChunks = new HashMap<>();
 
     //** CONSTRUCTOR **/
     private MapChunkManager() {
     }
 
     //** UTILITY **/
-    public static int regionCenter(int block) {
-        return Math.floorDiv(block + 64, REGION_SPAN) * REGION_SPAN + REGION_SPAN / 2 - 64;
+
+    /** Minecraft vanilla algorithm **/
+    public static int regionCenter(double block) {
+        int span = 128 * (1 << MAP_SCALE);
+        return Mth.floor((block + 64.0D) / (double) span) * span + span / 2 - 64;
     }
 
-    public static ChunkPos regionCenterChunk(int blockX, int blockZ) {
-        return new ChunkPos(regionCenter(blockX) >> 4, regionCenter(blockZ) >> 4);
+    public static BlockPos nearestRegionCenter(int blockX, int blockZ) {
+        return new BlockPos(regionCenter(blockX), 0, regionCenter(blockZ));
     }
 
-    public static long regionKey(int blockX, int blockZ) {
-        return ChunkPos.asLong(regionCenter(blockX) >> 4, regionCenter(blockZ) >> 4);
+    public static boolean isRegionMap(@Nullable MapItemSavedData data, BlockPos center, ResourceKey<Level> dimension) {
+        return data != null
+            && data.scale == MAP_SCALE
+            && data.centerX == center.getX()
+            && data.centerZ == center.getZ()
+            && data.dimension == dimension;
     }
 
-    private static Map<Long, Integer> regions(ServerLevel level) {
-        return REGIONS.computeIfAbsent(level.dimension(), k -> new HashMap<>());
+    public static ChunkPos mapCenterChunk(MapItemSavedData data) {
+        return new ChunkPos(new BlockPos(data.centerX, 0, data.centerZ));
+    }
+
+    public static void addScoutedChunk(ServerPlayer player, MapItemSavedData data) {
+        if (player == null || data == null) return;
+        String pId = HBUtil.PlayerUtil.getId(player);
+        ChunkPos center = mapCenterChunk(data);
+        scoutedChunks.computeIfAbsent(pId, p -> new HashSet<>()).add(center);
+    }
+
+    public static boolean isScouted(ServerPlayer player, ChunkPos center) {
+        Set<ChunkPos> centers = scoutedChunks.get(HBUtil.PlayerUtil.getId(player));
+        return centers != null && centers.contains(center);
+    }
+
+    private static Map<ChunkPos, Integer> regions(ServerLevel level) {
+        return REGIONS.computeIfAbsent(level, k -> new HashMap<>());
     }
 
     @Nullable
     public static Integer getRegionMapId(ServerLevel level, int blockX, int blockZ) {
         if (level == null) return null;
-        long key = regionKey(blockX, blockZ);
+        BlockPos center = nearestRegionCenter(blockX, blockZ);
+        ChunkPos key = new ChunkPos(center);
         Integer mapId = regions(level).get(key);
-        if (mapId != null && MapItem.getSavedData(mapId, level) != null) return mapId;
+        if (mapId != null) {
+            if (isRegionMap(MapItem.getSavedData(mapId, level), center, level.dimension()))
+                return mapId;
+        }
+
+        MapItemSavedData data = MapItemSavedData.createFresh(blockX, blockZ, MAP_SCALE, true, true, level.dimension());
+        if (!isRegionMap(data, center, level.dimension())) {
+            return null;
+        }
 
         int newId = level.getFreeMapId();
-        MapItemSavedData data = MapItemSavedData.createFresh(
-            regionCenter(blockX), regionCenter(blockZ), MAP_SCALE, true, true, level.dimension());
         level.setMapData(MapItem.makeKey(newId), data);
-        regions(level).put(key, newId);
+        data.setDirty();
+        regions(level).put(new ChunkPos(center), newId);
 
         LoggerProject.logDebug("016022", "Created region map " + newId + " at key " + key);
         return newId;
     }
-
 
 
     @Nullable
@@ -95,21 +136,30 @@ public class MapChunkManager {
         return mapId == null ? null : MapItem.getSavedData(mapId, level);
     }
 
+
+    //** EVENTS **/
     public static void init(EventRegistrar reg) {
         reg.registerOnLevelLoad(MapChunkManager::onLevelLoad);
-        reg.registerOnDataSave(MapChunkManager::onDataSave);
         reg.registerOnChunkLoad(MapChunkManager::handleChunkLoad);
-        reg.registerOnServerTick(TickType.ON_20_TICKS, MapChunkManager::on20Ticks);
+        reg.registerOnServerTick(TickType.ON_120_TICKS, MapChunkManager::on120Ticks);
         reg.registerOnServerStopped(MapChunkManager::onServerStopped);
+
+        reg.registerOnPlayerMatchesItem(MapChunkManager::playerHasMap, MapChunkManager::onPlayerHasItem);
+    }
+
+    private static boolean playerHasMap(ItemStack item) {
+        return item!=null && item.getItem() instanceof MapItem;
     }
 
 
-    //** EVENTS **/
     private static void handleChunkLoad(ChunkLoadingEvent.Load event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
         ChunkAccess chunk = event.getChunk();
         if (chunk == null) return;
+        if(INITIALIZED_CHUNKS.get(level)==null) return;
+        if(INITIALIZED_CHUNKS.get(level).contains(HBUtil.ChunkUtil.getChunkPos1DMap(chunk.getPos()) )) return;
 
+        INITIALIZED_CHUNKS.get(level).add(HBUtil.ChunkUtil.getChunkPos1DMap(chunk.getPos()));
         int blockX = chunk.getPos().getMinBlockX();
         int blockZ = chunk.getPos().getMinBlockZ();
 
@@ -122,6 +172,110 @@ public class MapChunkManager {
         if (data.colors[px + pz * 128] != 0) return;
 
         capturePixel(level, chunk, data, px, pz, blockX, blockZ);
+    }
+
+    //playerhasMap, checkMap, updateMap, markDirty, updateColors
+    public static void onPlayerHasItem(PlayerHasItemEvent event)
+    {
+        //parse inventory for all maps
+        ServerPlayer player = (ServerPlayer) event.getPlayer();
+        for(int i=0;i<player.getInventory().getContainerSize();i++) {
+            ItemStack stack = player.getInventory().getItem(i);
+            if(stack.isEmpty()||!(stack.getItem()instanceof MapItem))continue;
+            refreshHeldMaps(player,stack);
+        }
+    }
+
+    private static void on120Ticks(ServerTickEvent event) {
+        for (ServerPlayer player : HBUtil.PlayerUtil.getAllPlayers()) {
+            if (player == null || !(player.level() instanceof ServerLevel level)) continue;
+            preloadNearestRegionCenter(level, player);
+        }
+    }
+
+    private static void onLevelLoad(LevelLoadingEvent.Load event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) return;
+        LongSet initialized = ManagedChunkUtility.getInstance(level).getInitializedChunks();
+
+        //Load all possible Maps
+        INITIALIZED_CHUNKS.computeIfAbsent(level, k -> new LongOpenHashSet()).addAll(initialized);
+        MapIndex indices = level.getDataStorage().get(null, "idcounts");
+        CompoundTag retriever = new CompoundTag();
+        indices.save(retriever);
+        int i=0; String mapId = "map_" + i;;
+        while(retriever.contains(mapId)) {
+            MapItemSavedData data = level.getMapData(mapId);
+            if(isRegionMap(data, nearestRegionCenter(data.centerX,data.centerZ),level.dimension())) {
+                ChunkPos key = new ChunkPos(new BlockPos(data.centerX,0,data.centerZ));
+                regions(level).put(key,i);
+            }
+            i++;
+            mapId = "map_" + i;
+        }
+    }
+
+    private static void onServerStopped(ServerStoppedEvent event) {
+        REGIONS.clear();
+        scoutedChunks.clear();
+    }
+
+
+    //** STATIC CORE **//
+    public static void preloadNearestRegionCenter(ServerLevel level, ServerPlayer player) {
+        if (level == null || player == null) return;
+        BlockPos bp = player.blockPosition();
+        ChunkPos center = new ChunkPos(nearestRegionCenter(bp.getX(), bp.getZ()));
+
+        if (ManagedChunkUtility.getInstance(level).isChunkInitialized(center.x, center.z)) return;
+        ChunkExplorerManager.submitPriorityChunk(level, new ChunkPos(center.x, center.z));
+    }
+
+    public static void submitRegionChunks(ServerLevel level, MapItemSavedData data) {
+        if (level == null || data == null) return;
+
+        ManagedChunkUtility util = ManagedChunkUtility.getInstance(level);
+        int mapChunkRadius = REGION_SPAN / 2;
+        ChunkPos origin = HBUtil.ChunkUtil.getChunkPos(new BlockPos(data.centerX, 0, data.centerZ));
+
+        //iterate over x and z to size mapChunkRadius
+        for (int dx = -mapChunkRadius; dx <= mapChunkRadius; dx += 8) {
+            for (int dz = -mapChunkRadius; dz <= mapChunkRadius; dz += 8) {
+                int cx = origin.x + dx;
+                int cz = origin.z + dz;
+                if (util.isChunkInitialized(cx, cz)) continue;
+                ChunkExplorerManager.submitPriorityChunk(level, new ChunkPos(cx, cz));
+            }
+        }
+
+    }
+
+
+
+    public static int refreshHeldMaps(ServerPlayer player, ItemStack map) {
+        MapItemSavedData data = MapItem.getSavedData(map, player.level());
+        if (data == null) return 0;
+        if (!isScouted(player, mapCenterChunk(data))) return 0;
+        data.tickCarriedBy(player, map);
+        markMapFullyDirty(MapItem.getMapId(map), data, player);
+        return 1;
+    }
+
+
+
+
+    //** PIXEL UTILITY **//
+
+    public static void markMapFullyDirty(int mapId, MapItemSavedData data, ServerPlayer player) {
+        if (data == null || player == null) return;
+
+        HoldingPlayerAccessor holder = (HoldingPlayerAccessor) data.getHoldingPlayer(player);
+        holder.easymapSetMinDirtyX(0);
+        holder.easymapSetMinDirtyY(0);
+        holder.easymapSetMaxDirtyX(127);
+        holder.easymapSetMaxDirtyY(127);
+        holder.easymapSetDirtyData(true);
+        holder.easymapSetDirtyDecorations(true);
+        player.connection.send(data.getUpdatePacket(mapId, player));
     }
 
     private static void capturePixel(ServerLevel level, ChunkAccess chunk, MapItemSavedData data,
@@ -191,52 +345,5 @@ public class MapChunkManager {
         data.setColor(px, pz, color.getPackedId(brightness));
     }
 
-    private static void on20Ticks(ServerTickEvent event) {
-        for (ServerPlayer player : HBUtil.PlayerUtil.getAllPlayers()) {
-            if (player == null || !(player.level() instanceof ServerLevel level)) continue;
-            preloadNearestRegionCenter(level, player);
-        }
-    }
 
-    public static void preloadNearestRegionCenter(ServerLevel level, ServerPlayer player) {
-        if (level == null || player == null) return;
-
-        ChunkPos center = regionCenterChunk(player.blockPosition().getX(), player.blockPosition().getZ());
-        if (ManagedChunkUtility.getInstance(level).isChunkInitialized(center.x, center.z)) return;
-        ChunkExplorerManager.submitPriorityChunk(level, new ChunkPos(center.x, center.z));
-    }
-
-    private static void onLevelLoad(LevelLoadingEvent.Load event) {
-        if (!(event.getLevel() instanceof ServerLevel level)) return;
-        DataStore ds = GeneralConfig.getInstance().getDataStore();
-        if (ds == null) return;
-
-        JsonElement root = ds.getOrCreateLevelSaveData(Constants.MOD_ID, level).get(DATA_KEY);
-        if (root == null || !root.isJsonObject()) return;
-
-        Map<Long, Integer> byKey = regions(level);
-        byKey.clear();
-        JsonObject obj = root.getAsJsonObject();
-        for (String key : obj.keySet()) {
-            byKey.put(Long.parseLong(key), obj.get(key).getAsInt());
-        }
-    }
-
-    private static void onDataSave(DatastoreSaveEvent event) {
-        DataStore ds = event.getDataStore();
-        if (ds == null) return;
-
-        for (Map.Entry<ResourceKey<Level>, Map<Long, Integer>> entry : REGIONS.entrySet()) {
-            ServerLevel level = GeneralConfig.getInstance().getServer().getLevel(entry.getKey());
-            if (level == null) continue;
-
-            JsonObject obj = new JsonObject();
-            entry.getValue().forEach((key, mapId) -> obj.addProperty(String.valueOf(key), mapId));
-            ds.getOrCreateLevelSaveData(Constants.MOD_ID, level).addProperty(DATA_KEY, obj);
-        }
-    }
-
-    private static void onServerStopped(ServerStoppedEvent event) {
-        REGIONS.clear();
-    }
 }

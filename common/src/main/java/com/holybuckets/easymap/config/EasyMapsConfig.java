@@ -36,8 +36,5 @@ public class EasyMapsConfig {
 
     @Comment("Maximum structure icons placed on a single map. Nearest to the map center win")
     public int maxIconsPerMap = 24;
-
-    @Comment("Fill the map terrain from the biome source when revealed at a cartography table")
-    public boolean revealFillsTerrain = true;
-
+    
 }

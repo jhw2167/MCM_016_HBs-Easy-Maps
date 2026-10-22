@@ -1,16 +1,14 @@
 {
   "itemGroup.hbs_easymap": "HBs Easy Maps",
 
-  "map_reveal.created": "The cartographer charts the surrounding lands",
-  "map_reveal.filled": "The map gains detail from the surrounding lands",
-  "map_reveal.expanded": "The map is redrawn at a wider scale",
-  "map_reveal.recentered": "The map is redrawn for this region",
-  "map_reveal.nothing": "Nothing new could be charted here",
-  "map_reveal.rejected": "This map cannot be charted",
-  "map_reveal.locked": "A locked map cannot be charted",
-  "map_reveal.wrong_dimension": "This map belongs to another dimension",
-  "map_reveal.no_section": "No survey exists for this region yet",
-  "map_reveal.out_of_range": "This table lies outside the area this map covers",
-  "map_reveal.complete": "The map is fully charted",
-  "chunk_reveal_pending": "This map will fill in over time"
+  "hbs_easymaps.map_reveal.created": "Area Scouted!! The map will fill completely over time.",
+  "hbs_easymaps.map_reveal.recentered": "The map is redrawn for this region",
+  "hbs_easymaps.map_reveal.nothing": "Nothing new could be charted here",
+  "hbs_easymaps.map_reveal.rejected": "This map cannot be charted",
+  "hbs_easymaps.map_reveal.locked": "A locked map cannot be charted",
+  "hbs_easymaps.map_reveal.wrong_dimension": "This map belongs to another dimension",
+  "hbs_easymaps.map_reveal.no_section": "No survey exists for this region yet",
+  "hbs_easymaps.map_reveal.out_of_range": "This table lies outside the area this map covers",
+  "hbs_easymaps.map_reveal.complete": "The map is fully charted",
+  "hbs_easymaps.chunk_reveal_pending": "This map will fill in over time"
 }

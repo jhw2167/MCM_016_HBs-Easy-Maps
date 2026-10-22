@@ -61,6 +61,11 @@ public class ModConfig {
         return (config != null) ? config : new EasyMapsConfig();
     }
 
+    public static EasyMapsClientConfig getClientConfig() {
+        EasyMapsClientConfig config = Balm.getConfig().getActiveConfig(EasyMapsClientConfig.class);
+        return (config != null) ? config : new EasyMapsClientConfig();
+    }
+
     public static boolean isDevMode() {
         return getBalmConfig().devMode;
     }
@@ -69,8 +74,17 @@ public class ModConfig {
         return Math.max(0, getBalmConfig().maxIconsPerMap);
     }
 
-    public static boolean revealFillsTerrain() {
-        return getBalmConfig().revealFillsTerrain;
+    public static OverlayAlignment getOverlayAlignment() {
+        OverlayAlignment alignment = getClientConfig().overlayAlignment;
+        return alignment == null ? OverlayAlignment.RIGHT : alignment;
+    }
+
+    public static int getOverlayMapSize() {
+        return Math.max(32, Math.min(256, getClientConfig().overlayMapSize));
+    }
+
+    public static float getOverlayTextScale() {
+        return (float) Math.max(0.5, Math.min(3.0, getClientConfig().overlayTextScale));
     }
 
     public boolean isHydrated() {

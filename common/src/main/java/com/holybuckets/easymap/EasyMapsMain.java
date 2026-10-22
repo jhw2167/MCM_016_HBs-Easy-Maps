@@ -6,6 +6,7 @@ import com.holybuckets.easymap.config.EasyMapsConfig;
 import com.holybuckets.easymap.config.ModConfig;
 import com.holybuckets.easymap.core.MapChunkManager;
 import com.holybuckets.easymap.core.MapRevealerManager;
+import com.holybuckets.easymap.core.PlayerHomeSync;
 import net.blay09.mods.balm.api.Balm;
 import net.blay09.mods.balm.api.event.EventPriority;
 import net.blay09.mods.balm.api.event.server.ServerStartingEvent;
@@ -43,6 +44,7 @@ public class EasyMapsMain {
         ModConfig.init(registrar);
         MapChunkManager.init(registrar);
         MapRevealerManager.init(registrar);
+        PlayerHomeSync.init(registrar);
 
 
         //register local events

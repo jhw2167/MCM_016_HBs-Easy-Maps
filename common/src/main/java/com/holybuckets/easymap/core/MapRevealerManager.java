@@ -1,5 +1,6 @@
 package com.holybuckets.easymap.core;
 
+import com.holybuckets.easymap.Constants;
 import com.holybuckets.foundation.event.EventRegistrar;
 import com.holybuckets.foundation.event.custom.PlayerInteractEvent;
 import com.holybuckets.foundation.structure.StructureAPI;
@@ -68,15 +69,17 @@ public class MapRevealerManager {
     public static void onCartographyTableUse(ServerLevel level, ServerPlayer player, BlockPos tablePos, ItemStack map) {
         MapItemSavedData existing = isBlankMap(map) ? null : MapItem.getSavedData(map, level);
         if (existing != null && existing.locked) {
-            MESSAGER.sendBottomActionHint(player, "map_reveal.locked");
+            MESSAGER.sendBottomActionHint(player, Constants.MOD_ID, Constants.MOD_ID + "map_reveal.locked");
             return;
         }
 
         Integer mapId = MapChunkManager.getRegionMapId(level, tablePos.getX(), tablePos.getZ());
         if (mapId == null) {
-            MESSAGER.sendBottomActionHint(player, "map_reveal.rejected");
+            MESSAGER.sendBottomActionHint(player, Constants.MOD_ID, Constants.MOD_ID + "map_reveal.rejected");
             return;
         }
+        MapItemSavedData mapData = MapItem.getSavedData(mapId, level);
+        MapChunkManager.addScoutedChunk(player, mapData );
 
         ItemStack result = map;
         if (isBlankMap(map)) {
@@ -85,13 +88,14 @@ public class MapRevealerManager {
         }
 
         result.getOrCreateTag().putInt(TAG_MAP, mapId);
+        MapChunkManager.submitRegionChunks(level, MapItem.getSavedData(result, level));
         revealStructures(level, result);
 
         if (result!=map && !player.getInventory().add(result)) {
             player.drop(result, false);
         }
 
-        MESSAGER.sendBottomActionHint(player, "map_reveal.created");
+        MESSAGER.sendBottomActionHint(player, Constants.MOD_ID, Constants.MOD_ID + "map_reveal.created");
     }
 
     public static boolean revealStructures(ServerLevel level, ItemStack map) {
